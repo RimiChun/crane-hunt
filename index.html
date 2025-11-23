@@ -4,36 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crane Hunt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f1f1f1; }
-    header { background:#4a90e2; color:white; padding:15px; text-align:center; font-size:24px; }
-    #container { max-width:900px; margin:auto; padding:20px; }
-    iframe { width:100%; height:400px; border:0; }
-    form { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); margin-top:20px; }
-    label { font-weight:bold; }
-    input, textarea { width:100%; padding:10px; margin-top:5px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; }
-    button { background:#4a90e2; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; }
-    #status { margin-top:10px; font-weight:bold; }
+    body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:linear-gradient(to bottom, #e0f7fa, #ffffff); }
+    header { background:#00796b; color:white; padding:20px; text-align:center; font-size:28px; font-weight:700; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    #container { max-width:900px; margin:auto; padding:30px; }
+    h2 { color:#004d40; }
+    p { line-height:1.6; color:#333; }
+    iframe { width:100%; height:350px; border:0; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+    form { background:white; padding:25px; border-radius:12px; box-shadow:0 6px 12px rgba(0,0,0,0.1); margin-top:30px; }
+    label { font-weight:500; color:#00796b; display:block; margin-bottom:5px; }
+    input, textarea { width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; transition:0.3s; }
+    input:focus, textarea:focus { border-color:#004d40; outline:none; box-shadow:0 0 5px rgba(0,77,64,0.3); }
+    button { background:#00796b; color:white; padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:500; transition:0.3s; }
+    button:hover { background:#004d40; }
+    #status { margin-top:15px; font-weight:600; color:#00796b; }
+    a { color:#00796b; text-decoration:none; font-weight:500; }
+    a:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
 <header>Wowie! You found me!</header>
 <div id="container">
   <h2>Where have all the cranes flocked to?</h2>
-  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm where are the other 99 of my siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like you have for me.<br>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate.</p>
+  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm, where are my 99 siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like you have for me.</p>
 
-  <!-- uMap Embed: Replace with your actual uMap URL -->
-  <iframe src="https://umap.openstreetmap.fr/en/map/anonymous-edit/1320330:GvQiWhTWHcSY6nB5AV2cB-FNkDxTT6daHkKxhiKpTOM"></iframe>
+  <!-- uMap Embed -->
+  <iframe allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"></iframe>
+  <p><a href="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true">See full screen</a></p>
+
+  <p>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate.</p>
 
   <!-- Form for crane info -->
   <form id="craneForm">
     <input type="hidden" id="crane" name="crane">
 
     <label for="crane_name">Name me (optional)</label>
-    <input type="text" id="crane_name" name="crane_name">
+    <input type="text" id="crane_name" name="crane_name" placeholder="Enter a name">
 
     <label for="message">Leave a nice message (optional)</label>
-    <textarea id="message" name="message" rows="4"></textarea>
+    <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
 
     <label for="photo_url">Photo URL (optional)</label>
     <input type="text" id="photo_url" name="photo_url" placeholder="https://...">
@@ -53,13 +63,13 @@
   document.getElementById('craneForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const webAppURL = "YOUR_APPS_SCRIPT_WEB_APP_URL"; // Replace with your Apps Script URL
+    const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
 
     const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
 
     const result = await response.json();
     if (result.success) {
-      document.getElementById('status').innerText = "Submitted!";
+      document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
       document.getElementById('craneForm').reset();
     } else {
       document.getElementById('status').innerText = "Error submitting.";
