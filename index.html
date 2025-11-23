@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crane Hunt</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f1f1f1; }
+    header { background:#4a90e2; color:white; padding:15px; text-align:center; font-size:24px; }
+    #container { max-width:900px; margin:auto; padding:20px; }
+    iframe { width:100%; height:400px; border:0; }
+    form { background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); margin-top:20px; }
+    label { font-weight:bold; }
+    input, textarea { width:100%; padding:10px; margin-top:5px; margin-bottom:15px; border-radius:5px; border:1px solid #ccc; }
+    button { background:#4a90e2; color:white; padding:10px 20px; border:none; border-radius:5px; cursor:pointer; }
+    #status { margin-top:10px; font-weight:bold; }
+  </style>
+</head>
+<body>
+<header>Crane Hunt</header>
+<div id="container">
+  <h2>Your Crane</h2>
+  <p>View the map below and optionally submit info about the crane you found.</p>
+
+  <!-- uMap Embed: Replace with your actual uMap URL -->
+  <iframe src="https://umap.openstreetmap.fr/en/map/your-umap-map-id"></iframe>
+
+  <!-- Form for crane info -->
+  <form id="craneForm">
+    <input type="hidden" id="crane" name="crane">
+
+    <label for="crane_name">Name this crane (optional)</label>
+    <input type="text" id="crane_name" name="crane_name">
+
+    <label for="message">Message (optional)</label>
+    <textarea id="message" name="message" rows="4"></textarea>
+
+    <label for="photo_url">Photo URL (optional)</label>
+    <input type="text" id="photo_url" name="photo_url" placeholder="https://...">
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="status"></div>
+</div>
+
+<script>
+  // Get crane ID from URL
+  const params = new URLSearchParams(window.location.search);
+  const craneId = params.get('crane');
+  document.getElementById('crane').value = craneId;
+
+  document.getElementById('craneForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const webAppURL = "YOUR_APPS_SCRIPT_WEB_APP_URL"; // Replace with your Apps Script URL
+
+    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
+
+    const result = await response.json();
+    if (result.success) {
+      document.getElementById('status').innerText = "Submitted!";
+      document.getElementById('craneForm').reset();
+    } else {
+      document.getElementById('status').innerText = "Error submitting.";
+    }
+  });
+</script>
+</body>
+</html>
