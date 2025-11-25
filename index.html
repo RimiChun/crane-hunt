@@ -27,18 +27,13 @@
 <header>Wowie! You found me!<br>Now take me home :D</header>
 <div id="container">
   <h2>Where have all the cranes flocked to?</h2>
-  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm, where are my 99 siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like you have for me.</p>
+  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Take a look at the map below.</p>
 
-  <!-- uMap Embed -->
   <iframe allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"></iframe>
-  <p><a href="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true">See full screen</a></p>
+  <p><a href="//umap.openstreetmap.fr/en/map/crane-hunt_1320330">See full screen</a></p>
 
-  <p>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate!</p>
-
-  <!-- Form for crane info -->
   <form id="craneForm">
     <input type="hidden" id="crane" name="crane">
-
     <label for="crane_name">Name me (optional)</label>
     <input type="text" id="crane_name" name="crane_name" placeholder="Enter a name">
 
@@ -46,8 +41,7 @@
     <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
 
     <label for="photo_file">Upload a Photo (optional)</label>
-    <input type="file" id="photo_file" accept="image/*">
-    <input type="hidden" id="photo_url" name="photo_url">
+    <input type="file" id="photo_file" name="photo_file" accept="image/*">
 
     <button type="submit">Submit</button>
   </form>
@@ -56,50 +50,34 @@
 </div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const craneId = params.get('crane');
+const craneId = new URLSearchParams(window.location.search).get('crane');
 document.getElementById('crane').value = craneId;
 
 document.getElementById('craneForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const fileInput = document.getElementById('photo_file');
-  let photoUrl = '';
+  const form = document.getElementById('craneForm');
+  const formData = new FormData(form);
+  formData.append('action', 'submit');
+  formData.append('crane', craneId);
 
-  const webAppURL = "YOUR_WEBAPP_URL"; // replace with your Apps Script URL
+  const webAppURL = "https://script.google.com/macros/s/YOUR_DEPLOYED_SCRIPT_ID/exec";
 
-  // Upload image first if exists
-  if (fileInput.files.length > 0) {
-    const file = fileInput.files[0];
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-
-    await new Promise(resolve => {
-      reader.onload = async () => {
-        const response = await fetch(`${webAppURL}?action=uploadPhoto&crane=${encodeURIComponent(craneId)}`, {
-          method: "POST",
-          body: reader.result
-        });
-        const result = await response.json();
-        if(result.success) {
-          photoUrl = result.url;
-          document.getElementById('photo_url').value = photoUrl;
-          resolve();
-        } else {
-          document.getElementById('status').innerText = "Photo upload failed.";
-        }
-      };
+  try {
+    const response = await fetch(webAppURL, {
+      method: 'POST',
+      body: formData
     });
-  }
-
-  // Submit form data
-  const submitResponse = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(photoUrl)}`);
-  const submitResult = await submitResponse.json();
-  if(submitResult.success){
-    document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
-    document.getElementById('craneForm').reset();
-  } else {
+    const result = await response.json();
+    if (result.success) {
+      document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
+      form.reset();
+    } else {
+      document.getElementById('status').innerText = "Error submitting.";
+    }
+  } catch(err) {
     document.getElementById('status').innerText = "Error submitting.";
+    console.error(err);
   }
 });
 </script>
