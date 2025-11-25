@@ -49,7 +49,6 @@
     <input type="file" id="photo_file" accept="image/*">
     <input type="hidden" id="photo_url" name="photo_url">
 
-
     <button type="submit">Submit</button>
   </form>
 
@@ -57,26 +56,52 @@
 </div>
 
 <script>
-  // Get crane ID from URL
-  const params = new URLSearchParams(window.location.search);
-  const craneId = params.get('crane');
-  document.getElementById('crane').value = craneId;
+const params = new URLSearchParams(window.location.search);
+const craneId = params.get('crane');
+document.getElementById('crane').value = craneId;
 
-  document.getElementById('craneForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.getElementById('craneForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
+  const fileInput = document.getElementById('photo_file');
+  let photoUrl = '';
 
-    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
+  const webAppURL = "YOUR_WEBAPP_URL"; // replace with your Apps Script URL
 
-    const result = await response.json();
-    if (result.success) {
-      document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
-      document.getElementById('craneForm').reset();
-    } else {
-      document.getElementById('status').innerText = "Error submitting.";
-    }
-  });
+  // Upload image first if exists
+  if (fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+
+    await new Promise(resolve => {
+      reader.onload = async () => {
+        const response = await fetch(`${webAppURL}?action=uploadPhoto&crane=${encodeURIComponent(craneId)}`, {
+          method: "POST",
+          body: reader.result
+        });
+        const result = await response.json();
+        if(result.success) {
+          photoUrl = result.url;
+          document.getElementById('photo_url').value = photoUrl;
+          resolve();
+        } else {
+          document.getElementById('status').innerText = "Photo upload failed.";
+        }
+      };
+    });
+  }
+
+  // Submit form data
+  const submitResponse = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(photoUrl)}`);
+  const submitResult = await submitResponse.json();
+  if(submitResult.success){
+    document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
+    document.getElementById('craneForm').reset();
+  } else {
+    document.getElementById('status').innerText = "Error submitting.";
+  }
+});
 </script>
 </body>
 </html>
