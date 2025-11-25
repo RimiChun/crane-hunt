@@ -45,9 +45,8 @@
     <label for="message">Leave a nice message (optional)</label>
     <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
 
-    <p>Send me a photo of your crane or you and your crane!  
-    <a href="mailto:rimikonkon@gmail.com?subject=Crane Photo Submission">rimikonkon@gmail.com</a></p>
-
+    <label for="photo_url">Email me a photo with you and your crane, or just your crane at: <a href="mailto:rimikonkon@gmail.com">rimikonkon@gmail.com</a></label>
+    <input type="text" id="photo_url" name="photo_url" placeholder="YES ^o^/">
 
 
     <button type="submit">Submit</button>
@@ -67,11 +66,11 @@
 
     const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
 
-    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}`);
+    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
 
     const result = await response.json();
     if (result.success) {
-      document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
+      document.getElementById('status').innerText = "Submitted! Thank you for naming me~^^";
       document.getElementById('craneForm').reset();
     } else {
       document.getElementById('status').innerText = "Error submitting.";
