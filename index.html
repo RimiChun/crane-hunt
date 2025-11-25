@@ -1,82 +1,392 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crane Hunt</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <title>Crane Hunt — Floating Finds (Shared)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.1.0/firebase-database.js"></script>
   <style>
-    body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:linear-gradient(to bottom, #e0f7fa, #ffffff); }
-    header { background:#00796b; color:white; padding:20px; text-align:center; font-size:28px; font-weight:700; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-    #container { max-width:900px; margin:auto; padding:30px; }
-    h2 { color:#004d40; }
-    p { line-height:1.6; color:#333; }
-    iframe { width:100%; height:350px; border:0; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
-    form { background:white; padding:25px; border-radius:12px; box-shadow:0 6px 12px rgba(0,0,0,0.1); margin-top:30px; }
-    label { font-weight:500; color:#00796b; display:block; margin-bottom:5px; }
-    input, textarea { width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ccc; transition:0.3s; }
-    input:focus, textarea:focus { border-color:#004d40; outline:none; box-shadow:0 0 5px rgba(0,77,64,0.3); }
-    button { background:#00796b; color:white; padding:12px 25px; border:none; border-radius:8px; cursor:pointer; font-weight:500; transition:0.3s; }
-    button:hover { background:#004d40; }
-    #status { margin-top:15px; font-weight:600; color:#00796b; }
-    a { color:#00796b; text-decoration:none; font-weight:500; }
-    a:hover { text-decoration:underline; }
+    :root{
+      --teal:#00796b; --bg1:#e6f7f3; --bg2:#ffffff;
+    }
+    body{margin:0;font-family:Inter, Roboto, Arial, sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#033;}
+    header{background:linear-gradient(90deg,var(--teal),#2e8b7b); color:white;padding:18px 20px;text-align:center;font-size:20px;font-weight:700;}
+    .card{background:white;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(20,40,40,0.08);max-width:980px;margin:14px auto}
+    label{display:block;font-weight:600;color:var(--teal);margin-bottom:6px}
+    input[type="text"], textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #ccd;box-sizing:border-box}
+    input[type="file"]{display:block}
+    button{background:var(--teal);color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
+    #canvas-holder{max-width:1200px;margin:12px auto;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(5,20,20,0.08)}
+    small{color:#446}
+    .info-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:white;padding:16px;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,0.25);z-index:999;max-width:92%;width:420px}
+    .info-popup img{max-width:100%;border-radius:8px;display:block;margin-bottom:8px}
+    .close-btn{background:#eee;border-radius:8px;padding:6px 10px;border:0;cursor:pointer}
+    footer{max-width:980px;margin:12px auto;color:#245;text-align:center}
+    .loading{color:#669;font-style:italic}
+    .error{color:#c44}
+    .success{color:#060}
+    .setup-notice{background:#fffaed;border:1px solid #ffd699;border-radius:8px;padding:12px;margin:12px auto;max-width:980px}
+    .setup-notice strong{color:#c44}
   </style>
 </head>
 <body>
-<header>Wowie! You found me!<br>Now take me home :D</header>
-<div id="container">
-  <h2>Where have all the cranes flocked to?</h2>
-  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm, where are my 99 siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like you have for me.</p>
+  <header>Crane Hunt — Floating Finds (Shared)</header>
 
-  <!-- uMap Embed -->
-  <iframe allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"></iframe>
-  <p><a href="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true">See full screen</a></p>
+  <div id="setupNotice" class="setup-notice" style="display:none">
+    <strong>⚠️ Firebase Setup Required</strong>
+    <p style="margin:6px 0 0"><small>To use this app, you need a Firebase project. Follow the setup instructions in the browser console, then refresh.</small></p>
+  </div>
 
-  <p>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate!</p>
+  <div class="card">
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+      <div>
+        <h2 style="margin:0;color:#044">Upload a photo of your found crane</h2>
+        <small>All cranes float here for everyone to see — click any crane to read the name/message.</small>
+      </div>
+    </div>
 
-  <!-- Form for crane info -->
-  <form id="craneForm">
-    <input type="hidden" id="crane" name="crane">
+    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 260px;gap:12px">
+      <div>
+        <label for="photo">Choose a photo</label>
+        <input id="photo" type="file" accept="image/*">
+        <label for="name">Name your crane (optional)</label>
+        <input id="name" type="text" placeholder="C001 - Park Crane">
+        <label for="message">Message (optional)</label>
+        <textarea id="message" rows="3" placeholder="A short note..."></textarea>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="addBtn">Add Crane</button>
+          <div style="align-self:center;color:#556"><small id="statusHint"></small></div>
+        </div>
+      </div>
 
-    <label for="crane_name">Name me (optional)</label>
-    <input type="text" id="crane_name" name="crane_name" placeholder="Enter a name">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:#fbfffd;border-radius:8px;padding:10px;flex:1">
+          <strong>Tips</strong>
+          <ul style="margin:8px 0 0 18px">
+            <li>Upload a clear photo — phone photos are perfect.</li>
+            <li>Use a short name so popups look tidy.</li>
+            <li>Everyone sees your cranes instantly!</li>
+          </ul>
+        </div>
+        <div style="background:#fff;border-radius:8px;padding:10px">
+          <strong>Controls</strong>
+          <p style="margin:6px 0"><small>Click a floating crane to open its details. Watch them bounce!</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <label for="message">Leave a nice message (optional)</label>
-    <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
+  <div id="canvas-holder" class="card">
+    <!-- p5 canvas goes here -->
+  </div>
 
-    <label for="photo_file">Upload a Photo (optional)</label>
-    <input type="file" id="photo_file" accept="image/*">
-    <input type="hidden" id="photo_url" name="photo_url">
+  <div class="card" style="text-align:center">
+    <small>Total cranes: <span id="count">0</span> | <span id="firebaseStatus">Connecting...</span></small>
+  </div>
 
+  <div id="popup" class="info-popup" style="display:none">
+    <div id="popupContent"></div>
+    <div style="text-align:right;margin-top:8px">
+      <button class="close-btn" id="closePopup">Close</button>
+    </div>
+  </div>
 
-    <button type="submit">Submit</button>
-  </form>
-
-  <div id="status"></div>
-</div>
+  <footer style="text-align:center"><small>All cranes are shared with everyone — anonymous submissions powered by Firebase</small></footer>
 
 <script>
-  // Get crane ID from URL
-  const params = new URLSearchParams(window.location.search);
-  const craneId = params.get('crane');
-  document.getElementById('crane').value = craneId;
+/* =========================
+   Firebase Config
+   
+   SETUP INSTRUCTIONS:
+   1. Go to https://console.firebase.google.com
+   2. Create a new project (name it "Crane Hunt" or similar)
+   3. Select "Realtime Database"
+   4. Start in test mode (public read/write - don't use in production!)
+   5. Copy your config from Project Settings > General > Your apps > Web app
+   6. Replace the config object below with your values
+   
+   Your config will look like:
+   {
+     apiKey: "AIzaSy...",
+     authDomain: "crane-hunt-xyz.firebaseapp.com",
+     databaseURL: "https://crane-hunt-xyz.firebaseio.com",
+     projectId: "crane-hunt-xyz",
+     ...
+   }
+   ========================= */
 
-  document.getElementById('craneForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
 
-    const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCBOhEyJn_lndgzzDFcqMdMBp2pfwgtjOQ",
+  authDomain: "live-final-show-floating-crane.firebaseapp.com",
+  databaseURL: "https://live-final-show-floating-crane-default-rtdb.firebaseio.com",
+  projectId: "live-final-show-floating-crane",
+  storageBucket: "live-final-show-floating-crane.firebasestorage.app",
+  messagingSenderId: "380677734350",
+  appId: "1:380677734350:web:9f9fe0aabc487aeea4759f"
+};
 
-    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+let firebaseReady = false;
+let db;
 
-    const result = await response.json();
-    if (result.success) {
-      document.getElementById('status').innerText = "Submitted! Thank you for naming me.";
-      document.getElementById('craneForm').reset();
-    } else {
-      document.getElementById('status').innerText = "Error submitting.";
+// Initialize Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  firebaseReady = true;
+  document.getElementById('firebaseStatus').innerText = 'Connected ✓';
+} catch(e) {
+  console.error('Firebase init failed:', e);
+  document.getElementById('setupNotice').style.display = 'block';
+  document.getElementById('firebaseStatus').innerText = 'Not configured';
+  console.log('Please configure Firebase in the code and refresh.');
+}
+
+/* =========================
+   p5 sketch + app logic
+   ========================= */
+
+let canvasParent;
+let sprites = [];
+let spriteIds = new Set();
+
+async function setup() {
+  canvasParent = select('#canvas-holder');
+  const cnv = createCanvas(canvasParent.width, 600);
+  cnv.parent('canvas-holder');
+  pixelDensity(1);
+  
+  if(firebaseReady){
+    listenToFirebaseCranes();
+  }
+}
+
+function windowResized(){
+  const parentWidth = canvasParent.width;
+  resizeCanvas(parentWidth, max(380, Math.floor(window.innerHeight * 0.6)));
+}
+
+function draw() {
+  background(250, 255, 253);
+  for(let i=0;i<height;i++){
+    let t = map(i,0,height,0,1);
+    let r = lerp(230,255,t);
+    let g = lerp(245,255,t);
+    let b = lerp(242,255,t);
+    stroke(r,g,b);
+    line(0,i,width,i);
+  }
+
+  for(let i = 0; i < sprites.length; i++){
+    const s = sprites[i];
+    s.noiseOffX += 0.003 + (i%3)*0.0005;
+    s.noiseOffY += 0.003 + (i%4)*0.0003;
+    const nx = noise(s.noiseOffX, frameCount*0.001);
+    const ny = noise(s.noiseOffY, frameCount*0.001 + 1000);
+    s.vx = map(nx,0,1,-0.6,0.6) + s.vx*0.98;
+    s.vy = map(ny,0,1,-0.4,0.4) + s.vy*0.98;
+
+    s.x += s.vx;
+    s.y += s.vy;
+    s.angle += 0.005 * ( (i%2)?1:-1 );
+
+    if(s.x < s.w*0.4){ s.x = s.w*0.4; s.vx *= -0.7; }
+    if(s.x > width - s.w*0.4){ s.x = width - s.w*0.4; s.vx *= -0.7; }
+    if(s.y < s.h*0.4){ s.y = s.h*0.4; s.vy *= -0.7; }
+    if(s.y > height - s.h*0.4){ s.y = height - s.h*0.4; s.vy *= -0.7; }
+
+    for(let j=0;j<sprites.length;j++){
+      if(i===j) continue;
+      const o = sprites[j];
+      const dx = s.x - o.x;
+      const dy = s.y - o.y;
+      const d = sqrt(dx*dx+dy*dy);
+      const minD = (s.w + o.w)*0.28;
+      if(d < minD && d > 0.1){
+        const push = (minD - d) * 0.02;
+        s.x += (dx/d) * push;
+        s.y += (dy/d) * push;
+      }
+    }
+
+    push();
+    translate(s.x, s.y);
+    rotate(s.angle);
+    imageMode(CENTER);
+    tint(255, 255);
+    if(s.img) image(s.img, 0, 0, s.w, s.h);
+    pop();
+
+    noStroke();
+    fill(0,3);
+    ellipse(s.x, s.y + s.h*0.48, s.w*0.9, s.h*0.18);
+  }
+
+  select('#count').html(sprites.length);
+}
+
+/* ================
+   Firebase Listener
+   ================ */
+
+function listenToFirebaseCranes(){
+  db.ref('cranes').on('child_added', (snapshot) => {
+    const craneData = snapshot.val();
+    if(craneData && !spriteIds.has(craneData.id)){
+      addCraneToCanvas(craneData);
+      spriteIds.add(craneData.id);
     }
   });
+}
+
+/* ================
+   Input handling
+   ================ */
+
+document.getElementById('addBtn').addEventListener('click', async (ev) => {
+  if(!firebaseReady){
+    alert('Firebase not configured. Please check setup instructions.');
+    return;
+  }
+
+  const fileEl = document.getElementById('photo');
+  const name = document.getElementById('name').value.trim();
+  const msg  = document.getElementById('message').value.trim();
+  const status = document.getElementById('statusHint');
+
+  if(!fileEl.files[0]){ status.innerText = 'Please choose a photo.'; return; }
+  status.classList.remove('success', 'error');
+  status.classList.add('loading');
+  status.innerText = 'Uploading...';
+
+  const file = fileEl.files[0];
+  
+  try {
+    const dataURL = await fileToDataURL(file);
+    
+    const craneData = {
+      id: 'crane_' + Date.now() + '_' + floor(random(100000)),
+      name: name || '',
+      msg: msg || '',
+      ts: (new Date()).toISOString(),
+      dataURL: dataURL
+    };
+
+    // Save to Firebase
+    await db.ref('cranes').child(craneData.id).set(craneData);
+    
+    status.classList.remove('loading', 'error');
+    status.classList.add('success');
+    status.innerText = 'Added! Everyone can see it now.';
+    setTimeout(()=>{ status.innerText = ''; status.className = ''; }, 2500);
+    
+    document.getElementById('photo').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('message').value = '';
+  } catch(err) {
+    status.classList.remove('loading');
+    status.classList.add('error');
+    status.innerText = 'Error uploading. Try again.';
+    console.error(err);
+  }
+});
+
+function fileToDataURL(file){
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
+function addCraneToCanvas(craneData){
+  loadImage(craneData.dataURL, (img) => {
+    const maxDim = 160;
+    let w = img.width;
+    let h = img.height;
+    const scale = min(maxDim/w, maxDim/h, 1);
+    w = Math.round(w * scale);
+    h = Math.round(h * scale);
+
+    const s = {
+      id: craneData.id,
+      img: img,
+      x: random(w/2 + 20, width - w/2 - 20),
+      y: random(h/2 + 20, height - h/2 - 20),
+      w: w,
+      h: h,
+      vx: random(-0.3,0.3),
+      vy: random(-0.2,0.2),
+      angle: random(-0.5,0.5),
+      noiseOffX: random(1000),
+      noiseOffY: random(2000),
+      name: craneData.name,
+      msg: craneData.msg,
+      ts: craneData.ts,
+      dataURL: craneData.dataURL
+    };
+
+    sprites.push(s);
+  }, (err) => {
+    console.warn('Image load failed', err);
+  });
+}
+
+function mousePressed(){
+  for(let i = sprites.length - 1; i >= 0; i--){
+    const s = sprites[i];
+    const dx = mouseX - s.x;
+    const dy = mouseY - s.y;
+    const distToCenter = sqrt(dx*dx + dy*dy);
+    if(distToCenter < max(s.w, s.h) * 0.6){
+      openPopup(s);
+      break;
+    }
+  }
+}
+
+function openPopup(s){
+  const popup = document.getElementById('popup');
+  const content = document.getElementById('popupContent');
+  content.innerHTML = `
+    <div style="text-align:center">
+      <img src="${s.dataURL}" style="max-width:100%;border-radius:8px">
+      <h3 style="margin:8px 0 4px">${escapeHtml(s.name) || 'Unnamed crane'}</h3>
+      <p style="margin:0 0 6px;color:#334">${escapeHtml(s.msg) || '<i>No message</i>'}</p>
+      <small style="color:#667">Found: ${new Date(s.ts).toLocaleString()}</small>
+    </div>
+  `;
+  popup.style.display = 'block';
+}
+
+document.getElementById('closePopup').addEventListener('click', () => {
+  document.getElementById('popup').style.display = 'none';
+});
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#039;');
+}
+
+/* Boot */
+(function initSizes(){
+  setTimeout(()=>{ if(windowWidth>0) redraw(); }, 200);
+})();
 </script>
 </body>
 </html>
