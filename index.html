@@ -33,7 +33,7 @@
   <iframe allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"></iframe>
   <p><a href="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=true&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true">See full screen</a></p>
 
-  <p>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate.</p>
+  <p>I don't have a name currently, but I'd be honored to receive a name from you. Hey, we should take a picture together and share it here to commemorate!</p>
 
   <!-- Form for crane info -->
   <form id="craneForm">
@@ -44,9 +44,11 @@
 
     <label for="message">Leave a nice message (optional)</label>
     <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
+    
+    <label for="photo_file">Upload a Photo (optional)</label>
+    <input type="file" id="photo_file" accept="image/*">
+    <input type="hidden" id="photo_url" name="photo_url">
 
-    <label for="photo_url">Photo URL (optional)</label>
-    <input type="text" id="photo_url" name="photo_url" placeholder="https://...">
 
     <button type="submit">Submit</button>
   </form>
@@ -60,12 +62,26 @@
   const craneId = params.get('crane');
   document.getElementById('crane').value = craneId;
 
+  // Convert file → Base64 → put into hidden input
+  document.getElementById('photo_file').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      document.getElementById('photo_url').value = event.target.result; // Base64 string
+    };
+    reader.readAsDataURL(file);
+  });
+
   document.getElementById('craneForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
 
-    const response = await fetch(`${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`);
+    const response = await fetch(
+      `${webAppURL}?action=submit&crane=${encodeURIComponent(craneId)}&crane_name=${encodeURIComponent(document.getElementById('crane_name').value)}&message=${encodeURIComponent(document.getElementById('message').value)}&photo_url=${encodeURIComponent(document.getElementById('photo_url').value)}`
+    );
 
     const result = await response.json();
     if (result.success) {
@@ -76,5 +92,6 @@
     }
   });
 </script>
+
 </body>
 </html>
