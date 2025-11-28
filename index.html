@@ -10,9 +10,8 @@
     body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:linear-gradient(to bottom, #e0f7fa, #ffffff); overflow-x: hidden; }
     header { background:#00796b; color:white; padding:20px; text-align:center; font-size:28px; font-weight:700; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
     
-    #craneAnimation { position: fixed; top: 50%; left: -50px; font-size: 60px; pointer-events: none; z-index: 1000; animation: bounce 3s ease-in-out infinite, drift 4s ease-in-out infinite; opacity: 0; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-30px); } }
-    @keyframes drift { 0% { left: -50px; } 100% { left: calc(100vw + 50px); } }
+    .crane-float { position: fixed; font-size: 50px; pointer-events: none; z-index: 100; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+    @keyframes float { 0% { transform: translateY(0px) translateX(0px); } 25% { transform: translateY(-30px) translateX(20px); } 50% { transform: translateY(-50px) translateX(-10px); } 75% { transform: translateY(-20px) translateX(30px); } 100% { transform: translateY(0px) translateX(0px); } }
     
     #revealMessage { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 121, 107, 0.95); color: white; padding: 20px 30px; border-radius: 12px; font-size: 18px; font-weight: 500; max-width: 400px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 999; line-height: 1.6; text-align: center; }
     
@@ -41,7 +40,7 @@
 <header>Wowie! You found me!<br>Now take me home :D</header>
 <div id="container">
   <h2>Where have all the cranes flocked to?</h2>
-  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm, where are my 99 siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like I have been!</p>
+  <p>I am just one of 100 in my crane family, and here you've found me, yippee! Hmm, where are my 99 siblings? Take a look at the map below, and you'll see where each of them are and if they've been lucky enough to be found like you have for me.</p>
 
   <!-- uMap Embed -->
   <iframe allowfullscreen allow="geolocation" src="//umap.openstreetmap.fr/en/map/crane-hunt_1320330?scaleControl=false&miniMap=false&scrollWheelZoom=false&zoomControl=true&editMode=disabled&moreControl=true&searchControl=null&tilelayersControl=null&embedControl=null&datalayersControl=true&onLoadPanel=none&captionBar=false&captionMenus=true"></iframe>
@@ -59,22 +58,17 @@
     <label for="message">Leave a nice message (optional)</label>
     <textarea id="message" name="message" rows="4" placeholder="Write a message..."></textarea>
 
-    <label for="photo_url">Don't be shy! Feel free to send me a photo with you and your crane, or just your crane at: <a href="mailto:rimikonkon@gmail.com">rimikonkon@gmail.com</a><br>Do include the name of your crane and/or message you would like to accompany the photo:><br><br>Have you sent me a photo?:o</label>
+    <label for="photo_url">Don't be shy! Email me a photo with you and your crane, or just your crane at: <a href="mailto:rimikonkon@gmail.com">rimikonkon@gmail.com</a><br>Please include the name of your crane and/or message you would like to accompany the photo:><br><br>Have you sent me a photo?:o</label>
     <input type="text" id="photo_url" name="photo_url" placeholder="YES ^o^/">
 
     <button type="submit">Submit</button>
   </form>
 
   <div id="status"></div>
-  
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
-  </div>
-  <p style="text-align: center; color: #666; margin-top: 10px;">Cranes found: <span id="craneCount">0</span>/100</p>
 </div>
 
 <div id="revealMessage"></div>
-<div id="craneAnimation">🪶</div>
+<div id="cranesContainer"></div>
 
 <script>
   // YOUR MEANINGFUL MESSAGE - customize this!
@@ -122,8 +116,9 @@
   // Fetch crane data to see how many have been found
   async function fetchCraneData() {
     try {
-      // This assumes you have a Google Apps Script endpoint that returns found cranes count
-      const response = await fetch(`https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/usercache?action=getCount`);
+      // This calls the Google Apps Script GET endpoint to get the count
+      const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
+      const response = await fetch(`${webAppURL}?action=getCount`);
       const data = await response.json();
       craneCount = data.count || 0;
       updateProgressAndMessage();
@@ -133,10 +128,6 @@
   }
 
   function updateProgressAndMessage() {
-    const progressPercent = (craneCount / 100) * 100;
-    document.getElementById('progressFill').style.width = progressPercent + '%';
-    document.getElementById('craneCount').textContent = craneCount;
-    
     const messageDiv = document.getElementById('revealMessage');
     let messageHTML = '';
     
@@ -149,18 +140,43 @@
     });
     
     messageDiv.innerHTML = messageHTML;
+    updateCranes();
   }
 
-  function animateCrane() {
-    const crane = document.getElementById('craneAnimation');
-    crane.style.opacity = '1';
-    crane.style.animation = 'none';
-    setTimeout(() => {
-      crane.style.animation = 'bounce 3s ease-in-out infinite, drift 4s ease-in-out infinite';
-      setTimeout(() => {
-        crane.style.opacity = '0';
-      }, 3500);
-    }, 10);
+  function updateCranes() {
+    const container = document.getElementById('cranesContainer');
+    const currentCranes = container.querySelectorAll('.crane-float').length;
+    
+    // Add new cranes if needed
+    if (currentCranes < craneCount) {
+      for (let i = currentCranes; i < craneCount; i++) {
+        createCrane();
+      }
+    }
+    // Remove cranes if count decreased
+    else if (currentCranes > craneCount) {
+      const cranes = container.querySelectorAll('.crane-float');
+      for (let i = craneCount; i < currentCranes; i++) {
+        cranes[i].remove();
+      }
+    }
+  }
+
+  function createCrane() {
+    const container = document.getElementById('cranesContainer');
+    const crane = document.createElement('div');
+    crane.className = 'crane-float';
+    crane.textContent = '🪶';
+    
+    const randomX = Math.random() * (window.innerWidth - 60);
+    const randomY = Math.random() * (window.innerHeight - 60);
+    const duration = 4 + Math.random() * 3; // 4-7 seconds
+    
+    crane.style.left = randomX + 'px';
+    crane.style.top = randomY + 'px';
+    crane.style.animation = `float ${duration}s ease-in-out infinite`;
+    
+    container.appendChild(crane);
   }
 
   document.getElementById('craneForm').addEventListener('submit', async (e) => {
@@ -175,10 +191,7 @@
       document.getElementById('status').innerText = "Submitted! Thank you for naming me~^^";
       document.getElementById('craneForm').reset();
       
-      // Animate crane on successful submission
-      animateCrane();
-      
-      // Update count after a delay
+      // Update count after a delay (which will add a new crane)
       setTimeout(() => {
         fetchCraneData();
       }, 500);
