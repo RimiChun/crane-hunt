@@ -116,14 +116,29 @@
   // Fetch crane data to see how many have been found
   async function fetchCraneData() {
     try {
-      // This calls the Google Apps Script GET endpoint to get the count
       const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
-      const response = await fetch(`${webAppURL}?action=getCount`);
-      const data = await response.json();
-      craneCount = data.count || 0;
-      updateProgressAndMessage();
+      const callbackName = "craneCallback_" + Date.now();
+      
+      window[callbackName] = function(data) {
+        console.log("API Response:", data);
+        craneCount = data.count || 0;
+        console.log("Crane count updated to:", craneCount);
+        updateProgressAndMessage();
+        delete window[callbackName];
+      };
+      
+      const script = document.createElement('script');
+      script.src = `${webAppURL}?action=getCount&callback=${callbackName}`;
+      document.head.appendChild(script);
+      
+      // Clean up script tag after a delay
+      setTimeout(() => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+      }, 5000);
     } catch (error) {
-      console.log("Could not fetch crane data:", error);
+      console.error("Could not fetch crane data:", error);
     }
   }
 
