@@ -6,19 +6,9 @@
   <title>Crane Hunt</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:linear-gradient(to bottom, #e0f7fa, #ffffff); overflow-x: hidden; }
+    body { font-family: 'Roboto', sans-serif; margin:0; padding:0; background:linear-gradient(to bottom, #e0f7fa, #ffffff); }
     header { background:#00796b; color:white; padding:20px; text-align:center; font-size:28px; font-weight:700; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-    
-    .crane-float { position: fixed; font-size: 50px; pointer-events: none; z-index: 100; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-    @keyframes float { 0% { transform: translateY(0px) translateX(0px); } 25% { transform: translateY(-30px) translateX(20px); } 50% { transform: translateY(-50px) translateX(-10px); } 75% { transform: translateY(-20px) translateX(30px); } 100% { transform: translateY(0px) translateX(0px); } }
-    
-    #revealMessage { position: fixed; bottom: 20px; right: 20px; background: rgba(0, 121, 107, 0.95); color: white; padding: 20px 30px; border-radius: 12px; font-size: 18px; font-weight: 500; max-width: 400px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); z-index: 999; line-height: 1.6; text-align: center; }
-    
-    .reveal-word { display: inline; color: #4dd0e1; font-weight: 700; margin: 0 3px; }
-    .hidden-word { display: inline; color: rgba(255,255,255,0.3); margin: 0 3px; }
-    
-    #container { max-width:900px; margin:auto; padding:30px; position: relative; z-index: 1; }
+    #container { max-width:900px; margin:auto; padding:30px; }
     h2 { color:#004d40; }
     p { line-height:1.6; color:#333; }
     iframe { width:100%; height:350px; border:0; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
@@ -31,9 +21,6 @@
     #status { margin-top:15px; font-weight:600; color:#00796b; }
     a { color:#00796b; text-decoration:none; font-weight:500; }
     a:hover { text-decoration:underline; }
-    
-    .progress-bar { width: 100%; height: 6px; background: #e0e0e0; border-radius: 3px; margin-top: 30px; overflow: hidden; }
-    .progress-fill { height: 100%; background: linear-gradient(90deg, #00796b, #4dd0e1); width: 0%; transition: width 0.5s ease; }
   </style>
 </head>
 <body>
@@ -61,138 +48,18 @@
     <label for="photo_url">Don't be shy! Email me a photo with you and your crane, or just your crane at: <a href="mailto:rimikonkon@gmail.com">rimikonkon@gmail.com</a><br>Please include the name of your crane and/or message you would like to accompany the photo:><br><br>Have you sent me a photo?:o</label>
     <input type="text" id="photo_url" name="photo_url" placeholder="YES ^o^/">
 
+
     <button type="submit">Submit</button>
   </form>
 
   <div id="status"></div>
 </div>
 
-<div id="revealMessage"></div>
-<div id="cranesContainer"></div>
-
 <script>
-  // YOUR MEANINGFUL MESSAGE - customize this!
-  const fullMessage = [
-    "Every",
-    "fold",
-    "of",
-    "paper",
-    "holds",
-    "a",
-    "moment",
-    "of",
-    "peace,",
-    "and",
-    "each",
-    "crane",
-    "carries",
-    "a",
-    "piece",
-    "of",
-    "my",
-    "heart.",
-    "Thank",
-    "you",
-    "for",
-    "finding",
-    "me—for",
-    "finding",
-    "the",
-    "little",
-    "me",
-    "again."
-  ];
-
-  const SPREADSHEET_ID = "YOUR_SPREADSHEET_ID"; // Replace with your spreadsheet ID
-  const SHEET_NAME = "Sheet1";
-  
-  let craneCount = 0;
-  
   // Get crane ID from URL
   const params = new URLSearchParams(window.location.search);
   const craneId = params.get('crane');
   document.getElementById('crane').value = craneId;
-
-  // Fetch crane data to see how many have been found
-  async function fetchCraneData() {
-    try {
-      const webAppURL = "https://script.google.com/macros/s/AKfycbwD0M9v9_pUxJ8Fr5Bxz0X2U5AqUI0ZolvVpoCGZlDSDERtGMzbB3MyuBiYbxmi79IFiQ/exec";
-      const callbackName = "craneCallback_" + Date.now();
-      
-      window[callbackName] = function(data) {
-        console.log("API Response:", data);
-        craneCount = data.count || 0;
-        console.log("Crane count updated to:", craneCount);
-        updateProgressAndMessage();
-        delete window[callbackName];
-      };
-      
-      const script = document.createElement('script');
-      script.src = `${webAppURL}?action=getCount&callback=${callbackName}`;
-      document.head.appendChild(script);
-      
-      // Clean up script tag after a delay
-      setTimeout(() => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-      }, 5000);
-    } catch (error) {
-      console.error("Could not fetch crane data:", error);
-    }
-  }
-
-  function updateProgressAndMessage() {
-    const messageDiv = document.getElementById('revealMessage');
-    let messageHTML = '';
-    
-    fullMessage.forEach((word, index) => {
-      if (index < craneCount) {
-        messageHTML += `<span class="reveal-word">${word}</span> `;
-      } else {
-        messageHTML += `<span class="hidden-word">●</span> `;
-      }
-    });
-    
-    messageDiv.innerHTML = messageHTML;
-    updateCranes();
-  }
-
-  function updateCranes() {
-    const container = document.getElementById('cranesContainer');
-    const currentCranes = container.querySelectorAll('.crane-float').length;
-    
-    // Add new cranes if needed
-    if (currentCranes < craneCount) {
-      for (let i = currentCranes; i < craneCount; i++) {
-        createCrane();
-      }
-    }
-    // Remove cranes if count decreased
-    else if (currentCranes > craneCount) {
-      const cranes = container.querySelectorAll('.crane-float');
-      for (let i = craneCount; i < currentCranes; i++) {
-        cranes[i].remove();
-      }
-    }
-  }
-
-  function createCrane() {
-    const container = document.getElementById('cranesContainer');
-    const crane = document.createElement('div');
-    crane.className = 'crane-float';
-    crane.textContent = '🪶';
-    
-    const randomX = Math.random() * (window.innerWidth - 60);
-    const randomY = Math.random() * (window.innerHeight - 60);
-    const duration = 4 + Math.random() * 3; // 4-7 seconds
-    
-    crane.style.left = randomX + 'px';
-    crane.style.top = randomY + 'px';
-    crane.style.animation = `float ${duration}s ease-in-out infinite`;
-    
-    container.appendChild(crane);
-  }
 
   document.getElementById('craneForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -205,20 +72,10 @@
     if (result.success) {
       document.getElementById('status').innerText = "Submitted! Thank you for naming me~^^";
       document.getElementById('craneForm').reset();
-      
-      // Update count after a delay (which will add a new crane)
-      setTimeout(() => {
-        fetchCraneData();
-      }, 500);
     } else {
       document.getElementById('status').innerText = "Error submitting.";
     }
   });
-
-  // Load initial data
-  fetchCraneData();
-  // Refresh every 10 seconds to show new cranes found
-  setInterval(fetchCraneData, 10000);
 </script>
 </body>
 </html>
